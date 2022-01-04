@@ -95,20 +95,6 @@ class Tnetwork:
         y_deriv = 2 * delta_plus * (delta_plus * (delta_plus - 1) + delta_min * (delta_min - 1))
         z_deriv = 2 * delta_min * (delta_plus ** 2 + (delta_min - 1) ** 2)
         return z_deriv
-        # return np.linalg.norm(y_deriv, z_deriv) ** 2
-        # pos_dif = np.linalg.norm(x - y)
-        # neg_dif = np.linalg.norm(x - z)
-        # delta_plus = np.exp(pos_dif) / (np.exp(pos_dif) + np.exp(neg_dif))
-        # delta_min = np.exp(neg_dif) / (np.exp(pos_dif) + np.exp(neg_dif))
-        # numerat = 8 * np.exp(2 * pos_dif + neg_dif) * (pos_dif/np.abs(pos_dif) - neg_dif/np.abs(neg_dif))
-        # divider = (np.exp(pos_dif) + np.exp(neg_dif)) ** 3
-        # return 2 * np.linalg.norm(delta_plus - (delta_min - 1))
-        # return np.linalg.norm(delta_plus - (delta_min - 1)) ** 2
-        # numerat = 4 * np.exp(pos_dif + 2*neg_dif)
-        # divider = (np.exp(pos_dif) + np.exp(neg_dif)) ** 3
-        # return numerat / divider
-        # return (np.exp(x-y) / (np.exp(x-y) + np.exp(x-z))) ** 2 + (1 - (np.exp(x-z) / (np.exp(x-y) + np.exp(x-z)))) ** 2
-
 
 input_1 = [0.2, 0.3, 0.3]
 input_2 = [0.6, 0.7, 0.9]
