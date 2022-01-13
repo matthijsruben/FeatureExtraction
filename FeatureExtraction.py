@@ -1,16 +1,18 @@
-import IAMloader
 import functools
-import time
-import numpy as np
 import os
 import statistics
-import math
 import sys
+import time
+
+import math
+import numpy as np
 import statsmodels.api as sm
+
+import IAMloader
 
 
 def black_white_pixel(pixel, bits, slack):
-    return 0 if pixel < (2**bits + slack) / 2 else 255
+    return 0 if pixel < (2 ** bits + slack) / 2 else 255
 
 
 def black_white_row(row, slack):
@@ -24,13 +26,13 @@ def black_white_image(img, slack):
 def count_black_row(row, bits, slack):
     count = 0
     for pixel in row:
-        if pixel < (2**bits + slack) / 2:
+        if pixel < (2 ** bits + slack) / 2:
             count += 1
     return count
 
 
 def count_black_row_2(row, bits, slack):
-    return len(list(filter(lambda pix: pix < (2**bits + slack) / 2, row)))
+    return len(list(filter(lambda pix: pix < (2 ** bits + slack) / 2, row)))
 
 
 def ideal_hist(height, ub, lb, total, threshold):
@@ -48,7 +50,7 @@ def ideal_hist(height, ub, lb, total, threshold):
     - (100-threshold)/2% is between bottom line (0) and lb
     """
     middle_zone = int(round(threshold * total))
-    upper_lower_zone = int(round(((1-threshold)/2) * total))
+    upper_lower_zone = int(round(((1 - threshold) / 2) * total))
 
     # amount of pixels per row in each zone
     middle = int(round(middle_zone / (ub - lb)))
@@ -68,7 +70,7 @@ def hist_error(ub, lb, pixels_per_row):
     total = sum(pixels_per_row)
     lower_ideal, middle_ideal, upper_ideal = ideal_hist(height, ub, lb, total, 0.8)
     lower_img, middle_img, upper_img = pixels_per_row[:lb], pixels_per_row[lb:ub], pixels_per_row[ub:]
-    error1 = sum(map(lambda x: (x - lower_ideal)**2, lower_img))
+    error1 = sum(map(lambda x: (x - lower_ideal) ** 2, lower_img))
     error2 = sum(map(lambda x: (x - middle_ideal) ** 2, middle_img))
     error3 = sum(map(lambda x: (x - upper_ideal) ** 2, upper_img))
     return error1 + error2 + error3
@@ -178,7 +180,7 @@ def has_white_neighbor(x, y, image, connectivity):
     if connectivity == 8:
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                if 0 <= y+dy < len(image) and 0 <= x+dx < len(image[0]) and image[y+dy][x+dx] != 0 \
+                if 0 <= y + dy < len(image) and 0 <= x + dx < len(image[0]) and image[y + dy][x + dx] != 0 \
                         and not (dx == 0 and dy == 0):
                     return True
     elif connectivity == 4:
@@ -286,7 +288,8 @@ def find_blobs(image):
         if pixel in border_pixels:
             border_classes.add(cl)
     # Remove all pixels that belong to border classes and remove all pixels that are black
-    blobs = dict(filter(lambda item: item[1] not in border_classes and image[item[0][1]][item[0][0]] != 0, components.items()))
+    blobs = dict(
+        filter(lambda item: item[1] not in border_classes and image[item[0][1]][item[0][0]] != 0, components.items()))
     count -= len(border_classes) - 1  # all classes that are border classes should be removed from the count
     return blobs, count
 
@@ -332,7 +335,8 @@ def slantness(image):
         # For each angle, loop through all shifts (shift 10 pixels everytime)
         for shift in range(0, len(image[0])):
             shifted_line = list(map(lambda pix: (pix[0] + shift, pix[1]), line))
-            filtered_line = list(filter(lambda pix: 0 <= pix[0] < len(black_white[0]) and 0 <= pix[1] < len(black_white), shifted_line))
+            filtered_line = list(
+                filter(lambda pix: 0 <= pix[0] < len(black_white[0]) and 0 <= pix[1] < len(black_white), shifted_line))
             total = len(filtered_line)
             img_line = list(map(lambda pix: black_white[pix[1]][pix[0]], filtered_line))
             # Calculate # transitions and # black pixels on the line
@@ -347,6 +351,7 @@ def slantness(image):
     max_angle = round(180 - math.degrees(max(score, key=score.get)), 1)
     return max_angle, avg_angle, stdev_angle
 
+
 def extract_column(image, col_index):
     """
     :param image: the image to extract the column from.
@@ -354,6 +359,7 @@ def extract_column(image, col_index):
     :return: The array of pixels in the column at the given index.
     """
     return [image[y][col_index] for y in range(0, len(image))]
+
 
 def find_upper_boundary_pixel(column):
     """
@@ -366,6 +372,7 @@ def find_upper_boundary_pixel(column):
             return y
 
     return None
+
 
 def find_lower_boundary_pixel(column):
     """
