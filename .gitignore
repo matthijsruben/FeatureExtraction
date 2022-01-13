@@ -1,6 +1,9 @@
 # ignore data set
 data/*
 
+# Ignore PyCharm-related files
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
