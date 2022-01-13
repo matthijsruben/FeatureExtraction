@@ -6,6 +6,7 @@ import os
 import statistics
 import math
 import sys
+import statsmodels.api as sm
 
 
 def black_white_pixel(pixel, bits, slack):
@@ -408,6 +409,24 @@ def find_characteristic_contour(image, lower):
 
     min_y = min(0, min(contours))
     return [y - min_y for y in contours]
+
+
+def find_characteristic_contour_polynomial(contour):
+    """
+    Performs a regression analysis to find the parameters of the first-degree polynomial that best fits the
+    characteristic contour.
+    :param contour: an array of the y-coordinates of the characteristic contour.
+    :return: Considering formula y = ax + b, returns a tuple of (b; a; mean-squared-error).
+    """
+    # Create an array with x-coordinate for each data point
+    xs = np.arange(0, len(contour), 1)
+    # Add an intercept (constant)
+    xs = sm.add_constant(xs)
+
+    model = sm.OLS(contour, xs)
+    results = model.fit()
+
+    return results.params[0], results.params[1], results.mse_resid
 
 
 def feature_extraction(data, until, filename, feature_func, feature_names):
