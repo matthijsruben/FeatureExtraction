@@ -346,6 +346,69 @@ def slantness(image):
     max_angle = round(180 - math.degrees(max(score, key=score.get)), 1)
     return max_angle, avg_angle, stdev_angle
 
+def extract_column(image, col_index):
+    """
+    :param image: the image to extract the column from.
+    :param col_index: the column index.
+    :return: The array of pixels in the column at the given index.
+    """
+    return [image[y][col_index] for y in range(0, len(image))]
+
+def find_upper_boundary_pixel(column):
+    """
+    :param column: the array of pixels in the column
+    :return: The index of the uppermost black pixel in the provided column; None if no black pixels exist in this
+    column.
+    """
+    for y in range(0, len(column)):
+        if column[y] == 0:
+            return y
+
+    return None
+
+def find_lower_boundary_pixel(column):
+    """
+    :param column: the array of pixels in the column
+    :return: The index of the lowermost black pixel in the provided column; None if no black pixels exist in this
+    column.
+    """
+    for y in range(len(column) - 1, -1, -1):
+        if column[y] == 0:
+            return y
+
+    return None
+
+
+def find_characteristic_contour(image, lower):
+    """
+    Returns the characteristic contour of the provided image after elimination of discontinuities in y-direction, in a
+    normalized format such that the returned values are always >= 0.
+    :param image: the image to find the contours for.
+    :param lower: whether to extract the lower contour (True) or the upper contour (False).
+    :return: The normalized contour values.
+    """
+    bw_image = black_white_image(image, 150)
+
+    contours = []
+    last_contour_y = None
+
+    for x in range(0, len(bw_image[0])):
+        column = extract_column(bw_image, x)
+        contour_y = find_lower_boundary_pixel(column) if lower else find_upper_boundary_pixel(column)
+
+        if contour_y is None:
+            # Eliminate gaps between words or parts of a word
+            continue
+        elif last_contour_y is None:
+            contours.append(contour_y)
+        else:
+            contours.append(contours[-1] + np.sign(contour_y - last_contour_y))
+
+        last_contour_y = contour_y
+
+    min_y = min(0, min(contours))
+    return [y - min_y for y in contours]
+
 
 def feature_extraction(data, until, filename, feature_func, feature_names):
     features = [[name] for name in feature_names]
