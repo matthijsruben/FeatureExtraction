@@ -1,10 +1,12 @@
 import functools
+import operator
 import os
 import statistics
 import sys
 import time
 
 import math
+import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
 
@@ -436,6 +438,44 @@ def find_characteristic_contour_polynomial(contour):
     return results.params[0], results.params[1], results.mse_resid
 
 
+def find_local_extremes(contour, maxima=True, window=20):
+    """
+    Finds the x-coordinates of the local extremes, defined as points on the characteristic contour such that there is no
+    other point within a neighbourhood of the given size that has a larger (smaller) y-value.
+    :param contour: the contours to find extremes in.
+    :param maxima: whether to find the maxima (True) or the minima (False)
+    :param window: the size of the neighborhood in which the point has to be the maximum (minimum)
+    :return: The array of x-coordinates of the found local extremes.
+    """
+    extreme = max if maxima else min
+    comparator = operator.ge if maxima else operator.le
+
+    extremes = []
+    prev_was_extreme = False
+
+    for i in range(0, len(contour)):
+        # Find the extreme value in the neighborhood to the left of the current coordinate
+        extreme_left = None
+        if i > 0:
+            extreme_left = extreme(contour[max(0, i - window):max(0, i)])
+
+        # Find the extreme value to the right of the current coordinate
+        extreme_right = None
+        if i < len(contour) - 1:
+            extreme_right = extreme(contour[min(i + 1, len(contour)):min(i + 1 + window, len(contour))])
+
+        if (extreme_left is None or comparator(contour[i], extreme_left)) and (
+                extreme_right is None or comparator(contour[i], extreme_right)):
+            # Ensure that an extreme that covers multiple x-coordinates is only added once
+            if not prev_was_extreme:
+                extremes.append(i)
+            prev_was_extreme = True
+        else:
+            prev_was_extreme = False
+
+    return extremes
+
+
 def feature_extraction(data, until, filename, feature_func, feature_names):
     features = [[name] for name in feature_names]
     try:
@@ -479,7 +519,59 @@ feature_extraction(data, 100, filename, writing_zones, ['upper_zone', 'middle_zo
 feature_extraction(data, 100, filename, median_width, ['median_width'])  # ~1 min
 feature_extraction(data, 100, filename, slantness, ['most_occurring_angle', 'average_angle', 'stdev_angle'])  # ~ 10 min
 
+
 # SHOW STUFF -----------------------------------------------------------------------------------------------------------
+
+
+def visualize_contour(contour):
+    new_image = [[255 for pix in range(0, len(contour))] for row in range(0, max(contour) + 1)]
+    for x, y in enumerate(contour):
+        new_image[y][x] = 0
+
+    plt.imshow(new_image)
+
+
+def visualize_contour_extremes(contour):
+    maxima = find_local_extremes(contour, True)
+    maxima_y = [contour[x] for x in maxima]
+    minima = find_local_extremes(contour, False)
+    minima_y = [contour[x] for x in minima]
+
+    markerStyle = "x"
+    markerSize = 20
+    plt.scatter(maxima, maxima_y, s=markerSize, marker=markerStyle)
+    plt.scatter(minima, minima_y, s=markerSize, marker=markerStyle)
+
+
+def visualize_contour_slant(contour):
+    (intersection, slope, mse) = find_characteristic_contour_polynomial(contour)
+
+    X = np.arange(0, len(contour), 1)
+    Y = intersection + slope * X
+
+    plt.plot(X, Y)
+
+
+def visualize_contour_features(image):
+    bw_image = black_white_image(image, 150)
+    lower_contour = find_characteristic_contour(bw_image, True)
+
+    plt.subplot(3, 1, 1)
+    plt.imshow(bw_image)
+
+    plt.subplot(3, 1, 2)
+    visualize_contour(lower_contour)
+    visualize_contour_extremes(lower_contour)
+    visualize_contour_slant(lower_contour)
+
+    upper_contour = find_characteristic_contour(bw_image, False)
+    plt.subplot(3, 1, 3)
+    visualize_contour(upper_contour)
+    visualize_contour_extremes(upper_contour)
+    visualize_contour_slant(upper_contour)
+
+    plt.show()
+
 # for i in range(0, 3):
 #     image = data[i*10][1]
 #     IAMloader.show(image)
