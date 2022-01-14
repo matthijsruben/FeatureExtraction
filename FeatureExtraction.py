@@ -476,6 +476,81 @@ def find_local_extremes(contour, maxima=True, window=20):
     return extremes
 
 
+def find_local_slopes(contour, extremes, distance=10):
+    """
+    Performs a regression analysis to find the slopes of the first-degree polynomials that best fits the characteristic
+    contour to the left (right) of the given extremes.
+    :param contour: the contour to find the slopes for
+    :param extremes: the x-coordinates of the extremes around which to find the slopes
+    :param distance: the distance to the right/left of the extreme to find the slope for
+    :return: A tuple consisting of (slopes to the left of extremes, slopes to the right of extremes).
+    """
+    local_slopes_left = []
+    local_slopes_right = []
+    for extreme in extremes:
+        if extreme > 0:
+            contour_part_left = contour[max(0, extreme - distance):extreme]
+            _, slant, _ = find_characteristic_contour_polynomial(contour_part_left)
+            local_slopes_left.append(slant)
+
+        if extreme < len(contour) - 1:
+            contour_part_right = contour[extreme + 1:min(len(contour), extreme + 1 + distance)]
+            _, slant, _ = find_characteristic_contour_polynomial(contour_part_right)
+            local_slopes_right.append(slant)
+
+    return local_slopes_left, local_slopes_right
+
+
+def find_extremes_frequency(contour, extremes):
+    """
+    :param contour: the contour in which the extremes exist.
+    :param extremes: the x-coordinates of extremes in the contour
+    :return: The frequency of the extremes when compared to the contour.
+    """
+    return len(extremes) / len(contour)
+
+
+def _find_characteristic_contour_features(image, lower):
+    """
+    Calculates and returns the features related to the characteristic contours of the text line image.
+    1.  Slant of the regression line fit to the contour
+    2.  Mean squared error between the regression line and the original characteristic contour
+    3.  Frequency of maxima in the lower contour
+    4.  Frequency of minima in the lower contour
+    5.  Average local slope of characteristic contour to the left of local maxima in the contour
+    6.  Average local slope of characteristic contour to the right of local maxima in the contour
+    7.  Average local slope of characteristic contour to the left of local minima in the contour
+    8.  Average local slope of characteristic contour to the right of local minima in the contour
+    :param image:
+    :param lower: whether to extract features for the lower contour (True) or the upper contour (False).
+    :return: A tuple of features for the contour.
+    """
+    contour = find_characteristic_contour(image, lower)
+    _, slant, slant_mse = find_characteristic_contour_polynomial(contour)
+    local_maxima = find_local_extremes(contour, True)
+    local_maxima_freq = find_extremes_frequency(contour, local_maxima)
+    local_minima = find_local_extremes(contour, False)
+    local_minima_freq = find_extremes_frequency(contour, local_minima)
+
+    maxima_slopes_left, maxima_slopes_right = find_local_slopes(contour, local_maxima)
+    maxima_slopes_left_avg = np.average(maxima_slopes_left)
+    maxima_slopes_right_avg = np.average(maxima_slopes_right)
+    minima_slopes_left, minima_slopes_right = find_local_slopes(contour, local_minima)
+    minima_slopes_left_avg = np.average(minima_slopes_left)
+    minima_slopes_right_avg = np.average(minima_slopes_right)
+
+    return slant, slant_mse, local_maxima_freq, local_minima_freq, maxima_slopes_left_avg, maxima_slopes_right_avg, \
+           minima_slopes_left_avg, minima_slopes_right_avg
+
+
+def find_lower_characteristic_contour_features(image):
+    return _find_characteristic_contour_features(image, True)
+
+
+def find_upper_characteristic_contour_features(image):
+    return _find_characteristic_contour_features(image, False)
+
+
 def feature_extraction(data, until, filename, feature_func, feature_names):
     features = [[name] for name in feature_names]
     try:
