@@ -31,12 +31,15 @@ def data_generator(batch_size=100):
 
 
 def triplet_loss(y_true, y_pred):
-    anchor_out = y_pred[:, 100]
+    anchor_out = y_pred[:, 0:100]
     positive_out = y_pred[:, 100:200]
     negative_out = y_pred[:, 200:300]
 
     pos_dist = K.sum(K.abs(anchor_out - positive_out), axis=1)
     neg_dist = K.sum(K.abs(anchor_out - negative_out), axis=1)
+
+    # pos_dist = K.sum((anchor_out - positive_out)**2, axis=1)
+    # neg_dist = K.sum((anchor_out - negative_out)**2, axis=1)
 
     probs = K.softmax([pos_dist, neg_dist], axis=0)
 
@@ -54,14 +57,14 @@ x = Conv2D(128, 3, activation="relu")(x)
 x = Flatten()(x)
 x = Dense(100, activation="relu")(x)
 model = Model(input_layer, x)
-model.summary()
+# model.summary()
 
 triplet_model_a = Input((28, 28, 1))
 triplet_model_p = Input((28, 28, 1))
 triplet_model_n = Input((28, 28, 1))
 triplet_model_out = Concatenate()([model(triplet_model_a), model(triplet_model_p), model(triplet_model_n)])
 triplet_model = Model([triplet_model_a, triplet_model_p, triplet_model_n], triplet_model_out)
-triplet_model.summary()
+# triplet_model.summary()
 
 triplet_model.compile(loss=triplet_loss, optimizer="adam")
 # triplet_model.fit_generator(data_generator(), steps_per_epoch=150, epochs=3)
