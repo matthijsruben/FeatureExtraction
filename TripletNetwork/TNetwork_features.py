@@ -50,15 +50,20 @@ def triplet_loss(y_true, y_pred):
     positive_out = y_pred[:, 23:46]
     negative_out = y_pred[:, 46:69]
 
-    pos_dist = K.sum(K.abs(anchor_out - positive_out), axis=1)
-    neg_dist = K.sum(K.abs(anchor_out - negative_out), axis=1)
+    # # pos_dist = K.sum(K.abs(anchor_out - positive_out), axis=1)
+    # # neg_dist = K.sum(K.abs(anchor_out - negative_out), axis=1)
+    #
+    # probs = K.softmax([pos_dist, neg_dist], axis=0)
+    #
+    # return K.mean(K.abs(probs[0]) + K.abs(1.0 - probs[1]))
 
-    # pos_dist = K.sum((anchor_out - positive_out)**2, axis=1)
-    # neg_dist = K.sum((anchor_out - negative_out)**2, axis=1)
+    pos_dist = K.sum((anchor_out - positive_out) ** 2)
+    neg_dist = K.sum((anchor_out - negative_out) ** 2)
 
-    probs = K.softmax([pos_dist, neg_dist], axis=0)
+    delta_plus = K.pow(pos_dist, 2.7182828459) / (K.pow(pos_dist, 2.7182828459) + K.pow(neg_dist, 2.7182828459))
+    delta_min = K.pow(neg_dist, 2.7182828459) / (K.pow(pos_dist, 2.7182828459) + K.pow(neg_dist, 2.7182828459))
 
-    return K.mean(K.abs(probs[0]) + K.abs(1.0 - probs[1]))
+    return K.sum(delta_plus + (1 - delta_min) ** 2)
 
 
 # input_layer = Input((input_neurons, input_neurons, 1))
