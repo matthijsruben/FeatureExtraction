@@ -114,3 +114,47 @@ class SlantnessFeatures(Features):
             'slantness_avg_angle': self.avg_angle,
             'slantness_stdev_angle': self.stdev_angle
         }
+
+
+class ComponentsBlobsFeatures(Features):
+    def __init__(self,
+                 avg_distance,
+                 stdev_distance,
+                 avg_within_word_distance,
+                 avg_between_word_distance,
+                 avg_blob_area,
+                 avg_blob_perimeter,
+                 avg_blob_shape_factor,
+                 avg_blob_roundness):
+        """
+        Creates a ComponentsBlobsFeatures object.
+        :param avg_distance:
+        :param stdev_distance:
+        :param avg_within_word_distance:
+        :param avg_between_word_distance:
+        :param avg_blob_area:
+        :param avg_blob_perimeter:
+        :param avg_blob_shape_factor:
+        :param avg_blob_roundness:
+        """
+        self.avg_distance = avg_distance
+        self.stdev_distance = stdev_distance
+        self.avg_within_word_distance = avg_within_word_distance
+        self.avg_between_word_distance = avg_between_word_distance
+        self.avg_blob_area = avg_blob_area
+        self.avg_blob_perimeter = avg_blob_perimeter
+        self.avg_blob_shape_factor = avg_blob_shape_factor
+        self.avg_blob_roundness = avg_blob_roundness
+
+    @property
+    def features(self):
+        return {
+            'avg_distance': self.avg_distance,
+            'stdev_distance': self.stdev_distance,
+            'avg_within_word_distance': self.avg_within_word_distance,
+            'avg_between_word_distance': self.avg_between_word_distance,
+            'avg_blob_area': self.avg_blob_area,
+            'avg_blob_perimeter': self.avg_blob_perimeter,
+            'avg_blob_shape_factor': self.avg_blob_shape_factor,
+            'avg_blob_roundness': self.avg_blob_roundness,
+        }

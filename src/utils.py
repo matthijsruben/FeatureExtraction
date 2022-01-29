@@ -41,6 +41,16 @@ def get_bw_row(row, slack):
     return list(map(lambda x: get_bw_pixel(x, 8, slack), row))
 
 
+def get_border_pixels(width, height):
+    border_pixels = []
+    for x in range(width):
+        border_pixels.append((x, 0))
+        border_pixels.append((x, height - 1))
+    for y in range(height):
+        border_pixels.append((0, y))
+        border_pixels.append((width - 1, y))
+    return border_pixels
+
 def get_bw_image(image, slack):
     """
     Returns a black-and-white (i.e. binary) version of the provided image.
