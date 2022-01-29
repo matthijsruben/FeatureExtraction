@@ -3,7 +3,7 @@ from src.features.models import Features
 
 
 class TextImage:
-    def __init__(self, writer, image: list[list[int]]):
+    def __init__(self, writer, image):
         self.writer = writer
         self.image = image
         self.features = []
@@ -36,4 +36,4 @@ class TextImage:
         """
         :return: A dictionary of the writer of this image and all feature names mapped to their respective values.
         """
-        return {"writer": self.writer} | self.get_features_dictionary()
+        return {**{"writer": self.writer}, **self.get_features_dictionary()}

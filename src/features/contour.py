@@ -63,7 +63,7 @@ def _get_contour_features(text_image: TextImage, lower, extremes_window, slope_d
     )
 
 
-def get_characteristic_contour(bw_image: list[list[int]], lower):
+def get_characteristic_contour(bw_image, lower):
     """
     Returns the characteristic contour of the provided image after elimination of discontinuities in y-direction, in a
     normalized format such that the returned values are always >= 0.

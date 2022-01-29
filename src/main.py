@@ -28,7 +28,7 @@ def extract_and_write_features():
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
-        for i, datapoint in enumerate(data[:25]):
+        for i, datapoint in enumerate(data[:1]):
             futures.append(executor.submit(extract_features, datapoint, i))
         for future in concurrent.futures.as_completed(futures):
             images.append(future.result())
