@@ -1,6 +1,8 @@
 import concurrent.futures
+import os
 import sys
 
+import pandas as pd
 from tensorflow.keras import backend as K
 
 
@@ -91,6 +93,9 @@ def generate_confusion_matrix(thresholds, model_outputs, y, similarity_measure):
             sys.stdout.write("[%-20s] %d%%" % ('=' * int(20 * j), 100 * j))
             sys.stdout.flush()
 
+    # Ensure subsequent lines are printed on a  new line
+    print("")
+
     return tp, tn, fp, fn
 
 
@@ -170,3 +175,13 @@ def generate_statistics(thresholds, model_outputs, y, similarity_measure=None, p
             print("")
 
     return statistics
+
+
+def write_statistics(statistics, filename):
+    dicts = []
+    for threshold, stats in statistics:
+        dicts.append({"threshold": threshold, **stats})
+
+    df = pd.DataFrame(dicts)
+    os.makedirs("./output/network-stats", exist_ok=True)
+    df.to_csv(f"./output/network-stats/{filename}.csv", index=False)
