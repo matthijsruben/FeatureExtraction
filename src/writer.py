@@ -1,4 +1,5 @@
 import logging
+import os
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,25 @@ from src.models import TextImage
 path = "./features.txt"
 
 
+def write_or_append_features(images: [TextImage], path):
+    """
+    Writes the features associated with the provided images to a CSV-file at the given path. If a CSV-file exists at the
+    path, it appends the features (without headers). Else, it creates a new file with column headers.
+    :param images: the images with features extracted
+    :param path: the filepath to write the features to
+    :return:
+    """
+    df = pd.DataFrame([image.as_dict() for image in images])
+
+    if not os.path.isfile(path):
+        logging.info("Writing {} features to {}".format(len(images), path))
+        df.to_csv(path, index=False)
+    else:
+        logging.info("Appending {} features to {}".format(len(images), path))
+        df.to_csv(path, mode='a', index=False, header=False)
+
+
+# TODO: Implement write_features with smarter merging such that features are added based on the file names in the CSV.
 def write_features(images: [TextImage], path):
     """
     Writes the features associated with the provided images to a CSV-file at the given path.
