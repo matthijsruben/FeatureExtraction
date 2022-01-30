@@ -27,15 +27,17 @@ Read the Pipenv documentation for information on how to add new requirements to 
 
 ## Usage
 
+### Extracting and writing features
+
 Enter the pipenv shell (`pipenv shell`) and execute:
 
 ```shell
-python -m src.main
+python -m src.writer
 ```
 
 This will assume you want the feature files to be written to `./output/features`. If you instead want them to be written
 to a different folder, add an argument:
 
 ```shell
-python -m src.main <output directory>
+python -m src.writer <output directory>
 ```
