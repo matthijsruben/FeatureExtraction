@@ -1,6 +1,9 @@
 # ignore data set
 data/*
 
+output/features/*
+!output/features/retain
+
 # Ignore PyCharm-related files
 .idea
 
