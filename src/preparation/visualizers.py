@@ -2,7 +2,7 @@ import math
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.features.slantness import find_line
+from src.preparation.features.slantness import find_line
 
 
 def visualize_contour(contour):

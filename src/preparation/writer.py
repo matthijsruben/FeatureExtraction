@@ -7,12 +7,12 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.features.contour import get_contour_features
-from src.features.medianwidth import get_median_width_features
-from src.features.slantness import get_slantness_features
-from src.features.writingzones import get_writing_zone_features
-from src.iamloader import load_data_as_tuples
-from src.models import TextImage
+from src.preparation.features.contour import get_contour_features
+from src.preparation.features.medianwidth import get_median_width_features
+from src.preparation.features.slantness import get_slantness_features
+from src.preparation.features.writingzones import get_writing_zone_features
+from src.preparation.iamloader import load_data_as_tuples
+from src.preparation.models import TextImage
 
 DEFAULT_OUTPUT_DIR = "./output/features"
 

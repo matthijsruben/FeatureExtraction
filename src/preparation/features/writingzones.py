@@ -2,8 +2,8 @@ import logging
 
 import numpy as np
 
-from src.features.models import WritingZoneFeatures
-from src.models import TextImage
+from src.preparation.features.models import WritingZoneFeatures
+from src.preparation.models import TextImage
 
 
 def get_writing_zone_features(text_image: TextImage):

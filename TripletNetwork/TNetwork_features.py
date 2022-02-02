@@ -121,6 +121,7 @@ def triplet_loss_euler_2(y_true, y_pred):
 def accuracies(thresholds, results, pprint=False):
     TP, TN = [0] * len(thresholds), [0] * len(thresholds)
     FP, FN = [0] * len(thresholds), [0] * len(thresholds)
+
     for i in range(len(results)):
         j = (i + 1) / len(results)
         sys.stdout.write('\r')

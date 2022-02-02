@@ -4,9 +4,9 @@ import statistics
 
 import math
 
-from src import utils
-from src.features.models import SlantnessFeatures
-from src.models import TextImage
+from src.preparation import utils
+from src.preparation.features.models import SlantnessFeatures
+from src.preparation.models import TextImage
 
 
 def get_slantness_features(text_image: TextImage):

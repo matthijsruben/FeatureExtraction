@@ -3,9 +3,9 @@ import statistics
 
 import numpy as np
 
-from src import utils
-from src.features.models import ComponentsBlobsFeatures
-from src.models import TextImage
+from src.preparation import utils
+from src.preparation.features.models import ComponentsBlobsFeatures
+from src.preparation.models import TextImage
 
 
 def get_components_and_blobs_features(text_image: TextImage):
