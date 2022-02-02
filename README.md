@@ -27,9 +27,9 @@ Read the Pipenv documentation for information on how to add new requirements to 
 
 ## Usage
 
-### Extracting and writing features
+For everything mentioned below, make sure to first enter the pipenv shell (`pipenv shell`).
 
-Enter the pipenv shell (`pipenv shell`) and execute:
+### Extracting and writing features
 
 ```shell
 python -m src.writer
@@ -39,5 +39,22 @@ This will assume you want the feature files to be written to `./output/features`
 to a different folder, add an argument:
 
 ```shell
-python -m src.writer <output directory>
+python -m src.preparation.writer <output directory>
 ```
+
+### Hyperparameter tuning
+
+There is a number of variables that can be defined for hyperparameter tuning. These concern the ranges that are explored
+by the tuner, namely:
+
+- Number of dense layers: minimum, maximum, step-size (`DENSE_LAYERS_(MIN | MAX | STEP)`)
+- Number of nodes in the dense layers: minimum, maximum, step-size (`DENSE_LAYER_NODES_(MIN | MAX | STEP)`)
+
+These variables are listed at the very top of the `src.training.tuner` file (found at `src/training/tuner.py`).
+
+Run the automatic hyperparameter tuning by executing the following command in the pipenv shell:
+
+```shell
+python -m src.training.tuner
+```
+
