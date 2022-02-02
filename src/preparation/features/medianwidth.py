@@ -1,10 +1,10 @@
 import logging
 import statistics
 
-from src import utils
-from src.features.models import MedianWidthFeatures
-from src.models import TextImage
-from src.utils import get_bw_transition_count
+from src.preparation import utils
+from src.preparation.features.models import MedianWidthFeatures
+from src.preparation.models import TextImage
+from src.preparation.utils import get_bw_transition_count
 
 
 def get_median_width_features(text_image: TextImage):

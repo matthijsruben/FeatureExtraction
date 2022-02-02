@@ -1,5 +1,5 @@
-from src import utils
-from src.features.models import Features
+from src.preparation import utils
+from src.preparation.features.models import Features
 
 
 class TextImage:

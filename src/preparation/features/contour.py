@@ -4,9 +4,9 @@ import operator
 import numpy as np
 import statsmodels.api as sm
 
-from src import utils
-from src.features.models import ContourFeatures
-from src.models import TextImage
+from src.preparation import utils
+from src.preparation.features.models import ContourFeatures
+from src.preparation.models import TextImage
 
 
 def get_contour_features(text_image, extremes_window=10, slope_distance=10):

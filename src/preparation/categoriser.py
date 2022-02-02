@@ -4,7 +4,7 @@ import sys
 
 import pandas as pd
 
-from src.loader import load_datasets
+from src.preparation.loader import load_datasets
 
 DEFAULT_FEATURES_FILE = "./output/features/retain/features.csv"
 
@@ -78,5 +78,3 @@ if __name__ == "__main__":
 
     categorised_data = get_categorised_data(features_file)
     categorised_data.to_csv("./output/features/retain/features_categorised.csv", index=False)
-
-    print(load_datasets())
