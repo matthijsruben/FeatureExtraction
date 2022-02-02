@@ -5,7 +5,7 @@ from src.training.loader import load_features
 from src.training.network import generate_normalizer, generate_model, generate_triplet_model, data_generator
 from src.training.statistics import generate_statistics
 
-MAX_TRIALS = 15
+MAX_TRIALS = 100
 
 EPOCHS_NUM = 5
 EPOCHS_STEPS_NUM = 200
@@ -19,6 +19,9 @@ DENSE_LAYER_NODES_MAX = 512
 DENSE_LAYER_NODES_STEP = 32
 
 LOSS_FUNCTION = loss_functions.triplet_loss_l2
+OPTIMIZATION_STATISTIC = "f1_score"
+
+SIMILARITY_THRESHOLDS = range(1, 20)
 
 
 class HyperRegressor(kt.HyperModel):
@@ -57,7 +60,6 @@ class HyperRegressor(kt.HyperModel):
             loss=self.loss_function
         )
 
-        triplet_model.summary()
         return triplet_model
 
     def fit(self, hp, model, x, y, validation_data, **kwargs):
@@ -67,7 +69,16 @@ class HyperRegressor(kt.HyperModel):
         embedding = model.layers[3]
         validation_output = embedding.predict(x_val)
 
-        return generate_statistics([3], validation_output, y_val, False)[0][1]
+        statistics = generate_statistics(SIMILARITY_THRESHOLDS, validation_output, y_val, True)
+
+        best_threshold = None
+        best_stats = None
+        for threshold, stats in statistics:
+            if best_stats is None or stats[OPTIMIZATION_STATISTIC] > best_stats[OPTIMIZATION_STATISTIC]:
+                best_threshold = threshold
+                best_stats = stats
+
+        return {"threshold": best_threshold, **best_stats}
 
 
 def tune(loss_function):
@@ -79,7 +90,7 @@ def tune(loss_function):
         overwrite=True,
         directory="./output/network-tuning",
         project_name="triplet",
-        objective=kt.Objective("balanced_accuracy", "max")
+        objective=kt.Objective(OPTIMIZATION_STATISTIC, "max")
     )
     tuner.search_space_summary()
     tuner.search(x_train,
