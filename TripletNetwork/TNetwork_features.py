@@ -8,6 +8,8 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import *
 from tensorflow.python.keras.layers import Normalization
+from keras.layers import LeakyReLU
+import sys
 
 data = pd.read_csv('../output/features/retain/features_categorised.csv').values.tolist()
 
@@ -23,19 +25,20 @@ y_validation_2 = [x[0] for x in validation_2]
 
 classes = list(set([i[0] for i in data]))
 
-x_train = np.array([x[4:] for x in train])
-x_test = np.array([x[4:] for x in test])
-x_validation_1 = np.array([x[4:] for x in validation_1])
-x_validation_2 = np.array([x[4:] for x in validation_2])
+x_train = np.array([x[4:11] + x[15:18] + x[22:] for x in train])
+x_test = np.array([x[4:11] + x[15:18] + x[22:] for x in test])
+x_validation_1 = np.array([x[4:11] + x[15:18] + x[22:] for x in validation_1])
+x_validation_2 = np.array([x[4:11] + x[15:18] + x[22:] for x in validation_2])
 
-# X_train, Y_train = [], []
-# for l, v in zip(y_train, x_train):
-#     if l not in Y_train:
-#         X_train.append(v)
-#         Y_train.append(l)
+X_train, Y_train = [], []
+for l, v in zip(y_train, x_train):
+    if Y_train.count(l) <= 3:
+        X_train.append(v)
+        Y_train.append(l)
+x_train = np.array(X_train)
+y_train = np.array(Y_train)
 
 input_neurons = x_train.shape[1]
-output_neurons = x_train.shape[1]
 
 x_train = x_train.astype("float32")
 x_test = x_test.astype("float32")
@@ -113,10 +116,14 @@ def triplet_loss_euler_2(y_true, y_pred):
     return K.sqrt(K.sum(K.square(delta_plus + (1 - delta_min)), axis=-1)) ** 2
 
 
-def accuracies(thresholds, results):
+def accuracies(thresholds, results, pprint=False):
     TP, TN = [0] * len(thresholds), [0] * len(thresholds)
     FP, FN = [0] * len(thresholds), [0] * len(thresholds)
     for i in range(len(results)):
+        j = (i + 1) / len(results)
+        sys.stdout.write('\r')
+        sys.stdout.write("[%-20s] %d%%" % ('='*int(20*j), 100*j))
+        sys.stdout.flush()
         for j in range(len(results)):
             similarity = K.sqrt(K.sum(K.square(model_embeddings[i] - model_embeddings[j]), axis=-1))
             if y_validation_2[i] == y_validation_2[j]:
@@ -131,8 +138,22 @@ def accuracies(thresholds, results):
                         TN[k] += 1
                     else:
                         FN[k] += 1
-    for i in range(len(thresholds)):
-        print("At similarity of {}: {}".format(thresholds[i], str((TP[i] + TN[i]) / (TP[i] + TN[i] + FP[i] + FN[i]))))
+    print("")
+    if pprint:
+        for i in range(len(thresholds)):
+            print("At similarity of {}:".format(thresholds[i]))
+            print("_________| Positive | Negative |\n"
+                  "Positive | {} | {} |\n"
+                  "Negative | {} | {} |".format(TP[i], FN[i], FP[i], TN[i]))
+            recall = TP[i] / (TP[i] + FN[i])
+            precision = TP[i] / (TP[i] + FP[i])
+            accuracy = (TP[i] + TN[i]) / (TP[i] + TN[i] + FP[i] + FN[i])
+            print("Recall: {}, Precision: {}, Accuracy: {}".format(recall, precision, accuracy))
+            print("Balanced accuracy : {}".format((recall + (1 - recall)) / 2))
+            print("")
+    else:
+        for i in range(len(thresholds)):
+            print("At similarity of {}: {}".format(thresholds[i], str((TP[i] + TN[i]) / (TP[i] + TN[i] + FP[i] + FN[i]))))
 
 
 normalize = Normalization()#axis=1)
@@ -148,11 +169,20 @@ normalize.adapt(x_train)
 
 # model.summary()
 
+output_neurons = x_train.shape[1]
+
+# ReLu is best activation as: ReLu is fast
+# https://stats.stackexchange.com/questions/218752/relu-vs-sigmoid-vs-softmax-as-hidden-layer-neurons
+# https://datascience.stackexchange.com/questions/39042/how-to-use-leakyrelu-as-activation-function-in-sequence-dnn-in-keraswhen-it-per
+
 model = Sequential([
-  normalize,
-  Dense(input_neurons, activation="relu"),
-  Dense(20, activation="relu"),
-  Dense(output_neurons, activation="relu")
+    normalize,
+    Dense(input_neurons, activation="relu"),
+    # LeakyReLU(alpha=0.05),
+    Dense(15, activation="relu"),
+    # LeakyReLU(alpha=0.05),
+    Dense(output_neurons, activation="relu")
+    # LeakyReLU(alpha=0.05)
 ])
 
 triplet_model_a = Input((input_neurons,))
@@ -163,7 +193,7 @@ triplet_model = Model([triplet_model_a, triplet_model_p, triplet_model_n], tripl
 # triplet_model.summary()
 
 triplet_model.compile(loss=triplet_loss_l1, optimizer="adam")
-triplet_model.fit(data_generator(), steps_per_epoch=200, epochs=5)
+triplet_model.fit(data_generator(), steps_per_epoch=150, epochs=5)
 
 model_embeddings = triplet_model.layers[3].predict(x_validation_2, verbose=1)
 print(model_embeddings.shape)
@@ -184,4 +214,4 @@ print(model_embeddings.shape)
 # plt.show()
 
 
-accuracies([0.5, 1, 2, 5, 10], model_embeddings)
+accuracies([0.5, 1, 2, 5, 10], model_embeddings, True)
