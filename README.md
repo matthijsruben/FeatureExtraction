@@ -47,6 +47,9 @@ python -m src.preparation.writer <output directory>
 There is a number of variables that can be defined for hyperparameter tuning. These concern the ranges that are explored
 by the tuner, namely:
 
+- The total number of trials to run (i.e. number of different configurations to try) (`MAX_TRIALS`)
+- The number of epochs to run for each trial (`EPOCHS_NUM`)
+- The number of steps per epoch to run (`EPOCHS_STEPS_NUM`)
 - Number of dense layers: minimum, maximum, step-size (`DENSE_LAYERS_(MIN | MAX | STEP)`)
 - Number of nodes in the dense layers: minimum, maximum, step-size (`DENSE_LAYER_NODES_(MIN | MAX | STEP)`)
 

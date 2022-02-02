@@ -7,6 +7,9 @@ from src.training.statistics import generate_statistics
 
 MAX_TRIALS = 15
 
+EPOCHS_NUM = 5
+EPOCHS_STEPS_NUM = 200
+
 DENSE_LAYERS_MIN = 2
 DENSE_LAYERS_MAX = 16
 DENSE_LAYERS_STEP = 4
@@ -79,7 +82,11 @@ def tune(loss_function):
         objective=kt.Objective("balanced_accuracy", "max")
     )
     tuner.search_space_summary()
-    tuner.search(x_train, y_train, epochs=2, steps_per_epoch=200, validation_data=(x_val_1, y_val_1))
+    tuner.search(x_train,
+                 y_train,
+                 epochs=EPOCHS_NUM,
+                 steps_per_epoch=EPOCHS_STEPS_NUM,
+                 validation_data=(x_val_1, y_val_1))
     models = tuner.get_best_models(num_models=5)
     best_model = models[0]
     best_model.summary()
