@@ -11,6 +11,7 @@ statsmodels = "*"
 pandas = "*"
 tensorflow = "*"
 scikit-learn = "*"
+umap-learn = "*"
 
 [dev-packages]
 
