@@ -99,8 +99,8 @@ def triplet_loss_euler(y_true, y_pred):
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
     delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
 
-    return K.sqrt(K.sum(K.square(delta_plus - (delta_min - 1)), axis=-1)) ** 2
-
+    # return K.sqrt(K.sum(K.square(delta_plus - (delta_min - 1)), axis=-1)) ** 2
+    return (delta_plus - (delta_min - 1)) ** 2
 
 def triplet_loss_euler_2(y_true, y_pred):
     anchor_out = y_pred[:, 0:output_neurons]
@@ -110,7 +110,6 @@ def triplet_loss_euler_2(y_true, y_pred):
     pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
     neg_dist = K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
     neg_dist_2 = K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1))
-    # neg_dist = neg_dist if neg_dist < neg_dist_2 else neg_dist_2
     neg_dist = tf.math.minimum(neg_dist_2, neg_dist)
 
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
@@ -147,8 +146,8 @@ def accuracies(thresholds, results, pprint=False):
         for i in range(len(thresholds)):
             print("At similarity of {}:".format(thresholds[i]))
             print("_________| Positive | Negative |\n"
-                  "Positive | {} | {} |\n"
-                  "Negative | {} | {} |".format(TP[i], FN[i], FP[i], TN[i]))
+                  "Positive | {:<7} | {:<7} |\n"
+                  "Negative | {:<7} | {:<7} |".format(TP[i], FN[i], FP[i], TN[i]))
             recall = TP[i] / (TP[i] + FN[i])
             precision = TP[i] / (TP[i] + FP[i])
             true_negative = TN[i] / (TN[i] + FP[i])
@@ -198,7 +197,7 @@ triplet_model = Model([triplet_model_a, triplet_model_p, triplet_model_n], tripl
 # triplet_model.summary()
 
 triplet_model.compile(loss=triplet_loss_euler, optimizer="adam")
-triplet_model.fit(data_generator(), steps_per_epoch=150, epochs=5)
+triplet_model.fit(data_generator(), steps_per_epoch=200, epochs=15)
 
 model_embeddings = triplet_model.layers[3].predict(x_validation_2, verbose=1)
 print(model_embeddings.shape)
@@ -219,4 +218,4 @@ print(model_embeddings.shape)
 # plt.show()
 
 
-accuracies([0.5, 1, 2, 5, 10], model_embeddings, True)
+accuracies([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], model_embeddings, True)
