@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import umap.umap_ as umap
 from keras.models import Sequential
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import *
@@ -31,10 +32,10 @@ x_validation_1 = np.array([x[4:11] + x[15:18] + x[22:] for x in validation_1])
 x_validation_2 = np.array([x[4:11] + x[15:18] + x[22:] for x in validation_2])
 
 X_train, Y_train = [], []
-for l, v in zip(y_train, x_train):
-    if Y_train.count(l) <= 3:
+for label, v in zip(y_train, x_train):
+    if Y_train.count(label) < 2:
         X_train.append(v)
-        Y_train.append(l)
+        Y_train.append(label)
 x_train = np.array(X_train)
 y_train = np.array(Y_train)
 
@@ -98,7 +99,7 @@ def triplet_loss_euler(y_true, y_pred):
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
     delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
 
-    return K.sqrt(K.sum(K.square(delta_plus + (delta_min - 1)), axis=-1)) ** 2
+    return K.sqrt(K.sum(K.square(delta_plus - (delta_min - 1)), axis=-1)) ** 2
 
 
 def triplet_loss_euler_2(y_true, y_pred):
@@ -107,13 +108,15 @@ def triplet_loss_euler_2(y_true, y_pred):
     negative_out = y_pred[:, (2 * output_neurons):(3 * output_neurons)]
 
     pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
-    neg_dist = min(K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
-                   , K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1)))
+    neg_dist = K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
+    neg_dist_2 = K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1))
+    # neg_dist = neg_dist if neg_dist < neg_dist_2 else neg_dist_2
+    neg_dist = tf.math.minimum(neg_dist_2, neg_dist)
 
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
     delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
 
-    return K.sqrt(K.sum(K.square(delta_plus + (1 - delta_min)), axis=-1)) ** 2
+    return delta_plus ** 2 + ((1 - delta_min) ** 2)
 
 
 def accuracies(thresholds, results, pprint=False):
@@ -124,6 +127,7 @@ def accuracies(thresholds, results, pprint=False):
         sys.stdout.write('\r')
         sys.stdout.write("[%-20s] %d%%" % ('='*int(20*j), 100*j))
         sys.stdout.flush()
+
         for j in range(len(results)):
             similarity = K.sqrt(K.sum(K.square(model_embeddings[i] - model_embeddings[j]), axis=-1))
             if y_validation_2[i] == y_validation_2[j]:
@@ -131,13 +135,13 @@ def accuracies(thresholds, results, pprint=False):
                     if similarity <= thresholds[k]:
                         TP[k] += 1
                     else:
-                        FP[k] += 1
+                        FN[k] += 1
             else:
                 for k in range(len(thresholds)):
                     if similarity > thresholds[k]:
                         TN[k] += 1
                     else:
-                        FN[k] += 1
+                        FP[k] += 1
     print("")
     if pprint:
         for i in range(len(thresholds)):
@@ -147,9 +151,10 @@ def accuracies(thresholds, results, pprint=False):
                   "Negative | {} | {} |".format(TP[i], FN[i], FP[i], TN[i]))
             recall = TP[i] / (TP[i] + FN[i])
             precision = TP[i] / (TP[i] + FP[i])
+            true_negative = TN[i] / (TN[i] + FP[i])
             accuracy = (TP[i] + TN[i]) / (TP[i] + TN[i] + FP[i] + FN[i])
             print("Recall: {}, Precision: {}, Accuracy: {}".format(recall, precision, accuracy))
-            print("Balanced accuracy : {}".format((recall + (1 - recall)) / 2))
+            print("Balanced accuracy : {}".format((recall + true_negative) / 2))
             print("")
     else:
         for i in range(len(thresholds)):
@@ -192,7 +197,7 @@ triplet_model_out = Concatenate()([model(triplet_model_a), model(triplet_model_p
 triplet_model = Model([triplet_model_a, triplet_model_p, triplet_model_n], triplet_model_out)
 # triplet_model.summary()
 
-triplet_model.compile(loss=triplet_loss_l1, optimizer="adam")
+triplet_model.compile(loss=triplet_loss_euler, optimizer="adam")
 triplet_model.fit(data_generator(), steps_per_epoch=150, epochs=5)
 
 model_embeddings = triplet_model.layers[3].predict(x_validation_2, verbose=1)
