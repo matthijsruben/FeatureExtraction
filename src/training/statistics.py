@@ -84,8 +84,8 @@ def generate_statistics(thresholds, model_outputs, y, pprint=False):
         if pprint:
             print("At similarity of {}:".format(thresholds[i]))
             print("_________| Positive | Negative |\n"
-                  "Positive | {} | {} |\n"
-                  "Negative | {} | {} |".format(tp[i], fn[i], fp[i], tn[i]))
+                  "Positive | {:<7} | {:<7} |\n"
+                  "Negative | {:<7} | {:<7} |".format(tp[i], fn[i], fp[i], tn[i]))
             print("Recall: {}, Precision: {}, Accuracy: {}".format(recall, precision, accuracy))
             print("Balanced accuracy : {}".format((recall + (1 - recall)) / 2))
             print("")
