@@ -2,34 +2,54 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split
+import umap.umap_ as umap
+from keras.models import Sequential
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import *
+from tensorflow.python.keras.layers import Normalization
 
-data = pd.read_csv('../features.csv').values.tolist()
-# data = pd.read_csv('../features_categorised.csv').values.tolist()
+data = pd.read_csv('../output/features/retain/features_categorised.csv').values.tolist()
 
-y = [i[0] for i in data[0:4000]]
-X = np.array([i[2:]for i in data[0:4000]])
-classes = list(set(y))
+train = [x for x in data if x[3] == "train"]
+test = [x for x in data if x[3] == "test"]
+validation_1 = [x for x in data if x[3] == "validation_1"]
+validation_2 = [x for x in data if x[3] == "validation_2"]
 
-x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
+y_train = [x[0] for x in train]
+y_test = [x[0] for x in test]
+y_validation_1 = [x[0] for x in validation_1]
+y_validation_2 = [x[0] for x in validation_2]
+
+classes = list(set([i[0] for i in data]))
+
+x_train = np.array([x[4:] for x in train])
+x_test = np.array([x[4:] for x in test])
+x_validation_1 = np.array([x[4:] for x in validation_1])
+x_validation_2 = np.array([x[4:] for x in validation_2])
+
+# X_train, Y_train = [], []
+# for l, v in zip(y_train, x_train):
+#     if l not in Y_train:
+#         X_train.append(v)
+#         Y_train.append(l)
 
 input_neurons = x_train.shape[1]
 output_neurons = x_train.shape[1]
 
 x_train = x_train.astype("float32")
 x_test = x_test.astype("float32")
+x_validation_1 = x_validation_1.astype("float32")
+x_validation_2 = x_validation_2.astype("float32")
 
 
-def data_generator(batch_size=100):
+def data_generator(batch_size=128):
     while True:
         a = []
         p = []
         n = []
         for _ in range(batch_size):
-            pos_neg = random.sample(classes, 2)
+            pos_neg = random.sample(list(set(y_train)), 2)
             positive_sample = random.sample([d for d, l in zip(x_train, y_train) if l == pos_neg[0]], 2)
             negative_sample = random.choice([d for d, l in zip(x_train, y_train) if l == pos_neg[1]])
             a.append(positive_sample[0])
@@ -38,10 +58,10 @@ def data_generator(batch_size=100):
         yield [np.array(a), np.array(p), np.array(n)], np.zeros((batch_size, 1)).astype("float32")
 
 
-def triplet_loss(y_true, y_pred):
+def triplet_loss_l1(y_true, y_pred):
     anchor_out = y_pred[:, 0:output_neurons]
-    positive_out = y_pred[:, output_neurons:(2*output_neurons)]
-    negative_out = y_pred[:, (2*output_neurons):(3*output_neurons)]
+    positive_out = y_pred[:, output_neurons:(2 * output_neurons)]
+    negative_out = y_pred[:, (2 * output_neurons):(3 * output_neurons)]
 
     pos_dist = K.sum(K.abs(anchor_out - positive_out), axis=1)
     neg_dist = K.sum(K.abs(anchor_out - negative_out), axis=1)
@@ -50,40 +70,90 @@ def triplet_loss(y_true, y_pred):
 
     return K.mean(K.abs(probs[0]) + K.abs(1.0 - probs[1]))
 
-    # pos_dist = K.sum((anchor_out - positive_out) ** 2)
-    # neg_dist = K.sum((anchor_out - negative_out) ** 2)
-    #
-    # delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
-    # delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
-    #
-    # return K.sum(delta_plus + (1 - delta_min) ** 2)
+
+def triplet_loss_l2(y_true, y_pred):
+    anchor_out = y_pred[:, 0:output_neurons]
+    positive_out = y_pred[:, output_neurons:(2 * output_neurons)]
+    negative_out = y_pred[:, (2 * output_neurons):(3 * output_neurons)]
+
+    pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
+    neg_dist = K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
+
+    probs = K.softmax([pos_dist, neg_dist], axis=0)
+
+    return K.mean(K.abs(probs[0]) + K.abs(1.0 - probs[1]))
 
 
-def print_accuracy(threshold, results):
-    TP, TN = 0, 0
-    FP, FN = 0, 0
+def triplet_loss_euler(y_true, y_pred):
+    anchor_out = y_pred[:, 0:output_neurons]
+    positive_out = y_pred[:, output_neurons:(2 * output_neurons)]
+    negative_out = y_pred[:, (2 * output_neurons):(3 * output_neurons)]
+
+    pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
+    neg_dist = K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
+
+    delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
+    delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
+
+    return K.sqrt(K.sum(K.square(delta_plus + (delta_min - 1)), axis=-1)) ** 2
+
+
+def triplet_loss_euler_2(y_true, y_pred):
+    anchor_out = y_pred[:, 0:output_neurons]
+    positive_out = y_pred[:, output_neurons:(2 * output_neurons)]
+    negative_out = y_pred[:, (2 * output_neurons):(3 * output_neurons)]
+
+    pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
+    neg_dist = min(K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
+                   , K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1)))
+
+    delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
+    delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
+
+    return K.sqrt(K.sum(K.square(delta_plus + (1 - delta_min)), axis=-1)) ** 2
+
+
+def accuracies(thresholds, results):
+    TP, TN = [0] * len(thresholds), [0] * len(thresholds)
+    FP, FN = [0] * len(thresholds), [0] * len(thresholds)
     for i in range(len(results)):
         for j in range(len(results)):
             similarity = K.sqrt(K.sum(K.square(model_embeddings[i] - model_embeddings[j]), axis=-1))
-            if y_test[i] == y_test[j]:
-                if similarity <= threshold:
-                    TP += 1
-                else:
-                    FP += 1
+            if y_validation_2[i] == y_validation_2[j]:
+                for k in range(len(thresholds)):
+                    if similarity <= thresholds[k]:
+                        TP[k] += 1
+                    else:
+                        FP[k] += 1
             else:
-                if similarity > threshold:
-                    TN += 1
-                else:
-                    FN += 1
-    print("At similarity of {}: {}".format(threshold, str((TP + TN) / (TP + TN + FP + FN))))
+                for k in range(len(thresholds)):
+                    if similarity > thresholds[k]:
+                        TN[k] += 1
+                    else:
+                        FN[k] += 1
+    for i in range(len(thresholds)):
+        print("At similarity of {}: {}".format(thresholds[i], str((TP[i] + TN[i]) / (TP[i] + TN[i] + FP[i] + FN[i]))))
 
-input_layer = Input(shape=(x_train.shape[1],))
-x = Dense(input_neurons, activation='relu')(input_layer)
-x = Dense(input_neurons, activation='relu')(x)
-x = Dense(output_neurons, activation='relu')(x)
-model = Model(input_layer, x)
+
+normalize = Normalization()#axis=1)
+normalize.adapt(x_train)
+
+# input_layer = Input(shape=(x_train.shape[1],))
+# # x = normalize(input_layer)
+# x = Dense(input_neurons, activation='relu')(input_layer)
+# x = Dense(input_neurons, activation='relu')(x)
+# x = Dense(output_neurons, activation='relu')(x)
+# # model = Model(layer, x)
+# model = Model(input_layer, x)
 
 # model.summary()
+
+model = Sequential([
+  normalize,
+  Dense(input_neurons, activation="relu"),
+  Dense(20, activation="relu"),
+  Dense(output_neurons, activation="relu")
+])
 
 triplet_model_a = Input((input_neurons,))
 triplet_model_p = Input((input_neurons,))
@@ -92,23 +162,26 @@ triplet_model_out = Concatenate()([model(triplet_model_a), model(triplet_model_p
 triplet_model = Model([triplet_model_a, triplet_model_p, triplet_model_n], triplet_model_out)
 # triplet_model.summary()
 
-triplet_model.compile(loss=triplet_loss, optimizer="adam")
-triplet_model.fit(data_generator(), steps_per_epoch=200, epochs=10)
+triplet_model.compile(loss=triplet_loss_l1, optimizer="adam")
+triplet_model.fit(data_generator(), steps_per_epoch=200, epochs=5)
 
-model_embeddings = triplet_model.layers[3].predict(x_test, verbose=1)
+model_embeddings = triplet_model.layers[3].predict(x_validation_2, verbose=1)
 print(model_embeddings.shape)
 
 # reduced_embeddings = umap.UMAP(n_neighbors=15, min_dist=0.3, metric="correlation").fit_transform(model_embeddings)
 # print(reduced_embeddings.shape)
+
+# plt.scatter(reduced_embeddings[:, 0], reduced_embeddings[:, 1], c=y_test, cmap="hsv")
+# plt.show()
+# import matplotlib.cm as cm
+# colors = cm.rainbow(np.linspace(0, 1, reduced_embeddings.shape[0]))
+# for dataset, color in zip(reduced_embeddings, colors):
+#     plt.scatter(y_test, dataset, color=color)
 #
-# plt.scatter(reduced_embeddings[:, 0], reduced_embeddings[:, 1])
 #
-# for i, txt in enumerate(y_test):
-#     plt.annotate(txt, (reduced_embeddings[:, 0][i], reduced_embeddings[:, 1][i]))
+# # for i, txt in enumerate(y_test):
+# #     plt.annotate(txt, (reduced_embeddings[:, 0][i], reduced_embeddings[:, 1][i]))
 # plt.show()
 
-print_accuracy(0.5, model_embeddings)
-print_accuracy(1, model_embeddings)
-print_accuracy(2, model_embeddings)
-print_accuracy(5, model_embeddings)
-print_accuracy(10, model_embeddings)
+
+accuracies([0.5, 1, 2, 5, 10], model_embeddings)
