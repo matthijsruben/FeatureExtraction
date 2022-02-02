@@ -57,6 +57,13 @@ def calc_balanced_accuracy(tpos, tneg, fneg):
     return (calc_recall(tpos, fneg) + tneg) / 2
 
 
+def calc_f1_score(tpos, fpos, fneg):
+    precision = calc_precision(tpos, fpos)
+    recall = calc_recall(tpos, fneg)
+
+    return 2 * (precision * recall) / (precision + recall)
+
+
 def generate_statistics(thresholds, model_outputs, y, pprint=False):
     """
     Determines the statistics related to the model performance based on the outputs of the model and a similarity
@@ -77,6 +84,7 @@ def generate_statistics(thresholds, model_outputs, y, pprint=False):
         precision = calc_precision(tp[i], fp[i])
         accuracy = calc_accuracy(tp[i], tn[i], fp[i], fn[i])
         balanced_accuracy = calc_balanced_accuracy(tp[i], tn[i], fn[i])
+        f1_score = calc_f1_score(tp[i], fp[i], fn[i])
 
         statistics.append((
             threshold, {
@@ -84,6 +92,7 @@ def generate_statistics(thresholds, model_outputs, y, pprint=False):
                 "precision": precision,
                 "accuracy": accuracy,
                 "balanced_accuracy": accuracy,
+                "f1_score": f1_score,
             }))
 
         if pprint:
@@ -92,7 +101,8 @@ def generate_statistics(thresholds, model_outputs, y, pprint=False):
                   "Positive | {:<7} | {:<7} |\n"
                   "Negative | {:<7} | {:<7} |".format(tp[i], fn[i], fp[i], tn[i]))
             print("Recall: {}, Precision: {}, Accuracy: {}".format(recall, precision, accuracy))
-            print("Balanced accuracy : {}".format((recall + (1 - recall)) / 2))
+            print("Balanced accuracy : {}".format(balanced_accuracy))
+            print("F1-score: {}".format(f1_score))
             print("")
 
     return statistics
