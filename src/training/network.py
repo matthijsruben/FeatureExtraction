@@ -1,9 +1,10 @@
 import random
 
 import numpy as np
-from tensorflow.python.keras import Input
-from tensorflow.python.keras.layers import Dense, Normalization, Concatenate
-from tensorflow.python.keras.models import Sequential, Model
+from tensorflow.keras import Input
+from tensorflow.keras.layers import Dense, Concatenate
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.python.keras.layers import Normalization
 
 from src.training import loss_functions
 from src.training.loader import load_features
@@ -63,10 +64,9 @@ def main():
 
     triplet_model = generate_triplet_model(model, (input_neurons,))
     triplet_model.compile(loss=loss_functions.triplet_loss_l1, optimizer="adam")
-    triplet_model.fit(data_generator(x_train, y_train), steps_per_epoch=200, epochs=2)
+    triplet_model.fit(data_generator(x_train, y_train), steps_per_epoch=200, epochs=15)
 
     embedding = triplet_model.layers[3]
-    print(x_val_2.shape)
     validation_output = embedding.predict(x_val_2, verbose=1)
 
     generate_statistics([0.5, 1, 2, 5, 10], validation_output, y_val_2, True)

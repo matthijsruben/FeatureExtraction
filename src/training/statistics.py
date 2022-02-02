@@ -16,7 +16,6 @@ def generate_confusion_matrix(thresholds, model_outputs, y):
     tp, tn = [0] * len(thresholds), [0] * len(thresholds)
     fp, fn = [0] * len(thresholds), [0] * len(thresholds)
 
-    print(len(model_outputs))
     for i in range(len(model_outputs)):
         j = (i + 1) / len(model_outputs)
         sys.stdout.write('\r')
@@ -54,6 +53,10 @@ def calc_accuracy(tpos, tneg, fpos, fneg):
     return (tpos + tneg) / (tpos + tneg + fpos + fneg)
 
 
+def calc_balanced_accuracy(tpos, tneg, fneg):
+    return (calc_recall(tpos, fneg) + tneg) / 2
+
+
 def generate_statistics(thresholds, model_outputs, y, pprint=False):
     """
     Determines the statistics related to the model performance based on the outputs of the model and a similarity
@@ -73,12 +76,14 @@ def generate_statistics(thresholds, model_outputs, y, pprint=False):
         recall = calc_recall(tp[i], fn[i])
         precision = calc_precision(tp[i], fp[i])
         accuracy = calc_accuracy(tp[i], tn[i], fp[i], fn[i])
+        balanced_accuracy = calc_balanced_accuracy(tp[i], tn[i], fn[i])
 
         statistics.append((
             threshold, {
                 "recall": recall,
                 "precision": precision,
                 "accuracy": accuracy,
+                "balanced_accuracy": accuracy,
             }))
 
         if pprint:

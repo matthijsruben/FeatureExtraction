@@ -12,6 +12,7 @@ pandas = "*"
 tensorflow = "*"
 scikit-learn = "*"
 umap-learn = "*"
+keras-tuner = "*"
 
 [dev-packages]
 
