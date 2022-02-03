@@ -22,7 +22,7 @@ def generate_confusion_matrix(thresholds, model_outputs, y):
         sys.stdout.write("[%-20s] %d%%" % ('=' * int(20 * j), 100 * j))
         sys.stdout.flush()
 
-        for j in range(len(model_outputs)):
+        for j in range(min(i + 1, len(model_outputs)), len(model_outputs)):
             similarity = K.sqrt(K.sum(K.square(model_outputs[i] - model_outputs[j]), axis=-1))
 
             if y.iloc[i] == y.iloc[j]:
