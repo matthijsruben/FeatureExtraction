@@ -1,5 +1,5 @@
 from tensorflow.keras import backend as K
-
+import tensorflow as tf
 
 def get_single_output_size(y_pred):
     # Output consists of the outputs for both anchor, positive and negative input. Hence, the output for a single input
@@ -61,10 +61,11 @@ def triplet_loss_euler_2(y_true, y_pred):
     negative_out = y_pred[:, (2 * single_output_size):(3 * single_output_size)]
 
     pos_dist = K.sqrt(K.sum(K.square(anchor_out - positive_out), axis=-1))
-    neg_dist = min(K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
-                   , K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1)))
+    neg_dist = K.sqrt(K.sum(K.square(anchor_out - negative_out), axis=-1))
+    neg_dist_2 = K.sqrt(K.sum(K.square(positive_out - negative_out), axis=-1))
+    neg_dist = tf.math.minimum(neg_dist_2, neg_dist)
 
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
     delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
 
-    return K.sqrt(K.sum(K.square(delta_plus + (1 - delta_min)), axis=-1)) ** 2
+    return delta_plus ** 2 + ((1 - delta_min) ** 2)
