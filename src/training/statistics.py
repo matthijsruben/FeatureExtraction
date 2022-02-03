@@ -162,6 +162,10 @@ def generate_statistics(thresholds, model_outputs, y, similarity_measure=None, p
                 "accuracy": accuracy,
                 "balanced_accuracy": balanced_accuracy,
                 "f1_score": f1_score,
+                "tp": tp[i],
+                "tn": tn[i],
+                "fp": fp[i],
+                "fn": fn[i],
             }))
 
         if pprint:
