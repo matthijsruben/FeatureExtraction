@@ -68,7 +68,7 @@ def main():
     embedding = triplet_model.layers[3]
     test_output = embedding.predict(x_test, verbose=1)
 
-    stats = generate_statistics(range(1, 120), test_output, y_test, True)
+    stats = generate_statistics(range(1, 150, 1), test_output, y_test, True)
     write_statistics(stats, "triplet_loss_euler")
 
 
