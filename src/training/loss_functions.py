@@ -50,7 +50,7 @@ def triplet_loss_euler(y_true, y_pred):
     delta_plus = K.exp(pos_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
     delta_min = K.exp(neg_dist) / (K.exp(pos_dist) + K.exp(neg_dist))
 
-    return K.sqrt(K.sum(K.square(delta_plus + (delta_min - 1)), axis=-1)) ** 2
+    return (delta_plus ** 2) + (delta_min - 1) ** 2
 
 
 def triplet_loss_euler_2(y_true, y_pred):

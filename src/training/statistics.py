@@ -30,13 +30,13 @@ def generate_confusion_matrix(thresholds, model_outputs, y):
                     if similarity <= thresholds[k]:
                         tp[k] += 1
                     else:
-                        fp[k] += 1
+                        fn[k] += 1
             else:
                 for k in range(len(thresholds)):
                     if similarity > thresholds[k]:
                         tn[k] += 1
                     else:
-                        fn[k] += 1
+                        fp[k] += 1
 
     return tp, tn, fp, fn
 
