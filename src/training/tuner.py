@@ -31,23 +31,25 @@ class HyperRegressor(kt.HyperModel):
         super().__init__()
 
     def build(self, hp):
-        # Variable number of layers, to be optimized by the tuner
-        num_layers = hp.Int(
-            "layers",
-            min_value=DENSE_LAYERS_MIN,
-            max_value=DENSE_LAYERS_MAX,
-            step=DENSE_LAYERS_STEP
-        )
-
-        dense_layers = []
-        for i in range(0, num_layers):
-            # Add a new configuration for a dense layer with a variable number of nodes, to be optimized by the tuner
-            dense_layers.append(hp.Int(
+        nodes_per_layer = []
+        for i in range(DENSE_LAYERS_MAX):
+            nodes_per_layer.append(hp.Int(
                 f"units_{i}",
                 min_value=DENSE_LAYER_NODES_MIN,
                 max_value=DENSE_LAYER_NODES_MAX,
                 step=DENSE_LAYER_NODES_STEP
             ))
+
+        dense_layers = []
+        # Variable number of layers, to be optimized by the tuner
+        for i in range(hp.Int(
+                "layers",
+                min_value=DENSE_LAYERS_MIN,
+                max_value=DENSE_LAYERS_MAX,
+                step=DENSE_LAYERS_STEP
+        )):
+            # Add a new configuration for a dense layer with a variable number of nodes, to be optimized by the tuner
+            dense_layers.append(nodes_per_layer[i])
 
         normalizer = generate_normalizer(self.x_train)
 
